@@ -149,12 +149,16 @@ idle_server_daemon() {
 					while true; do
 						echo -n "Netcat: "
 						if [[ "${IDLE_WAKE_MODE}" == "whitelist" ]]; then
-							set +e # temporarily disable set -e to get the exit status
-							"${NETCAT_CMD[@]}" -v -l -p "${GAME_PORT}" 2>&1 | (grep -m1 -a -F -f <(${IDLE_WAKE_WHITELIST_CMD[@]} "${IDLE_WAKE_WHITELIST}") && pkill -P $$ "${NETCAT_CMD[@]}")
+							set +e # temporarily disable set -e to get the exit status of grep
+							"${NETCAT_CMD[@]}" -l -p "${GAME_PORT}" | (
+								grep -m1 -a -F -f <(${IDLE_WAKE_WHITELIST_CMD[@]} "${IDLE_WAKE_WHITELIST}") 
+								exit_status=$?
+								pkill -P $$ "${NETCAT_CMD[@]}" 
+								exit "$exit_status")
 							exit_status=$?
 							set -e
 							echo -n "Netcat caught a connection. "
-							if [[ $exit_status -ne 0 ]]; then # this could also happen if pkill somehow fails
+							if [[ $exit_status -ne 0 ]]; then
 								echo "But it didn't match anything in the whitelist."
 							else
 								break
