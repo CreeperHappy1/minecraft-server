@@ -28,11 +28,14 @@ declare -r GAME="@GAME@"
 [[ -n "${GAME_PORT}" ]]         && declare -r GAME_PORT=${GAME_PORT}       || GAME_PORT="@GAME_PORT@"
 [[ -n "${CHECK_PLAYER_TIME}" ]] && declare -r CHECK_PLAYER_TIME=${CHECK_PLAYER_TIME} || CHECK_PLAYER_TIME="@CHECK_PLAYER_TIME@"
 [[ -n "${IDLE_IF_TIME}" ]]      && declare -r IDLE_IF_TIME=${IDLE_IF_TIME} || IDLE_IF_TIME="@IDLE_IF_TIME@"
+[[ -n "${IDLE_WAKE_MODE}" ]]    && declare -r IDLE_WAKE_MODE=${IDLE_WAKE_MODE} 	|| IDLE_WAKE_MODE="@IDLE_WAKE_MODE@"
+[[ -n "${IDLE_WAKE_WHITELIST}" ]]    && declare -r IDLE_WAKE_WHITELIST=${IDLE_WAKE_WHITELIST} 	|| IDLE_WAKE_WHITELIST="@IDLE_WAKE_WHITELIST@"
 
 # Additional configuration options which only few may need to alter
 [[ -n "${GAME_COMMAND_DUMP}" ]] && declare -r GAME_COMMAND_DUMP=${GAME_COMMAND_DUMP} || GAME_COMMAND_DUMP="@GAME_COMMAND_DUMP@"
 [[ -n "${MAX_SERVER_START_TIME}" ]] && declare -r MAX_SERVER_START_TIME=${MAX_SERVER_START_TIME} || MAX_SERVER_START_TIME="@MAX_SERVER_START_TIME@"
 [[ -n "${MAX_SERVER_STOP_TIME}" ]] && declare -r MAX_SERVER_STOP_TIME=${MAX_SERVER_STOP_TIME} || MAX_SERVER_STOP_TIME="@MAX_SERVER_STOP_TIME@"
+[[ -n "${IDLE_WAKE_WHITELIST_CMD}" ]] && declare -r IDLE_WAKE_WHITELIST_CMD=${IDLE_WAKE_WHITELIST_CMD} || IDLE_WAKE_WHITELIST_CMD="@IDLE_WAKE_WHITELIST_CMD@"
 
 # Variables passed over the command line will always override the one from a config file
 source /etc/conf.d/"@GAME@" 2>/dev/null || >&2 echo "Could not source /etc/conf.d/@GAME@"
@@ -144,7 +147,11 @@ idle_server_daemon() {
 					no_player=$(( IDLE_IF_TIME - 300 ))
 					# Game server is down, listen on port ${GAME_PORT} for incoming connections
 					echo -n "Netcat: "
-					"${NETCAT_CMD[@]}" -v -l -p "${GAME_PORT}" 2>&1 | (grep -m1 -i "connect" && pkill -P $$ "${NETCAT_CMD[@]}") || true
+					if [[ "${IDLE_WAKE_MODE}" == "whitelist" ]]
+						"${NETCAT_CMD[@]}" -v -l -p "${GAME_PORT}" 2>&1 | (grep -m1 -i "connect" && pkill -P $$ "${NETCAT_CMD[@]}") || true
+					else
+						"${NETCAT_CMD[@]}" -v -l -p "${GAME_PORT}" 2>&1 | (grep -m1 -a -F -f <(${IDLE_WAKE_WHITELIST_CMD[@]} $(IDLE_WAKE_WHITELIST)) && pkill -P $$ "${NETCAT_CMD[@]}") || true
+					fi
 					echo "Netcat caught a connection. The server is coming up again..."
 					IDLE_SERVER="false" ${INAME} start
 				fi
@@ -211,6 +218,16 @@ server_start() {
 			>&2 echo "The netcat binaries are needed for suspending an idle server."
 			exit 12
 		fi
+
+		# Check if IDLE_WAKE_MODE has a valid value, default to "any" otherwise
+		case "${IDLE_WAKE_MODE}" in
+		any|whitelist)
+			;;
+		*)
+			>&2 echo "Warning: IDLE_WAKE_MODE is an invalid value: '${IDLE_WAKE_MODE}', defaulting to 'any'"
+			IDLE_WAKE_MODE=any
+			;;
+		esac
 
 		# Start the idle server daemon
 		if socket_has_session "${IDLE_SESSION_NAME}"; then
