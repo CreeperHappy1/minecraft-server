@@ -155,7 +155,7 @@ idle_server_daemon() {
 							set -e
 							echo -n "Netcat caught a connection. "
 							if [[ $exit_status -ne 0 ]]; then # this could also happen if pkill somehow fails
-								echo "But it didn't match anything in the whitelist..."
+								echo "But it didn't match anything in the whitelist."
 							else
 								break
 							fi
