@@ -1,18 +1,20 @@
 #ifndef HTTP_SERVER_HPP
 #define HTTP_SERVER_HPP
 
-#include "../include/httplib.h"
+#include <httplib.h>
 #include "idleDaemonIPC.hpp"
 
 class httpsServer{
 private:
-    std::string listen;
-    int port;
+    std::string listenHost;
+    int listenPort;
     std::string token;
     idleDaemonIPC idIPC;
 public:
-    httpsServer(std::string listen, int port, std::string token);
+    httpsServer(std::string listenHost, int listenPort, std::string token);
     ~httpsServer();
+
+    void run();
 };
 
 #endif // HTTP_SERVER_HPP
