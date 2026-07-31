@@ -28,7 +28,8 @@ idleDaemonIPC::~idleDaemonIPC(){
     if(reader.joinable())
         reader.join();
     write_fd.close();
-    read_fd.close();
+    if(read_fd.is_open())
+        read_fd.close();
     delete players;
 }
 
@@ -74,8 +75,8 @@ void idleDaemonIPC::refresh(){
     }
 }
 
-std::string idleDaemonIPC::getSeverStatus() const {
-    switch(status){
+std::string idleDaemonIPC::getServerStatus() const {
+    switch(serverStatus){
         case OFFLINE:
             return "OFFLINE";
         case ONLINE:
@@ -94,5 +95,5 @@ int idleDaemonIPC::getPlayercount() const {
 }
 
 void idleDaemonIPC::wake(){
-
+    write_fd << "WAKE\n";
 }

@@ -26,7 +26,7 @@ public:
     idleDaemonIPC(const char* cmd_fifo_path, const char* status_fifo_path, httplib::Server* server);
     ~idleDaemonIPC();
 
-    std::string getSeverStatus() const;
+    std::string getServerStatus() const;
     int getPlayercount() const;
 
     void wake();

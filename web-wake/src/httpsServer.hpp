@@ -2,14 +2,14 @@
 #define HTTP_SERVER_HPP
 
 #include "../include/httplib.h"
-#include "idleDaemonSocket.hpp"
+#include "idleDaemonIPC.hpp"
 
 class httpsServer{
 private:
     std::string listen;
     int port;
     std::string token;
-    idleDaemonSocket idleSoc;
+    idleDaemonIPC idIPC;
 public:
     httpsServer(std::string listen, int port, std::string token);
     ~httpsServer();
