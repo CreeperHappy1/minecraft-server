@@ -1,0 +1,5 @@
+{
+    "listen host": "0.0.0.0",
+    "listen port": 25566,
+    "token": "uninitialized"
+}
