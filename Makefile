@@ -80,7 +80,7 @@ define replace_all
 endef
 
 all: $(OBJECTS) $(WEB_WAKE_BIN)
-	echo $@
+	@echo $^
 
 $(BUILD_DIR) $(BUILD_DIR)/$(WEB_WAKE_DIR):
 	mkdir -p $@
