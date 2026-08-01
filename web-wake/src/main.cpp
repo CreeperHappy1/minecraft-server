@@ -11,7 +11,12 @@ const json defaultConfig = {
     {"listen port", 25566},
     {"token", "uninitialized"}
 };
-const std::string configPath = "config.json";
+
+#ifdef CONFIG_PATH
+const std::string configPath = CONFIG_PATH;
+#else
+const std::string configPath = "config.json";//fallback
+#endif
 
 std::string genToken(){
     unsigned char randomBytes[32];

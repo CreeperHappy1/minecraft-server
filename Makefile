@@ -10,8 +10,13 @@ datarootdir = $(prefix)/share
 mandir = $(prefix)/share/man
 man1dir = $(mandir)/man1
 
+BUILD_DIR = build
+WEB_WAKE_DIR = web-wake
+CXX ?= g++
+CXXFLAGS ?= -O2 -Wall
+
 SOURCES = minecraftd.sh.in minecraftd.conf.in minecraftd.service.in minecraftd.sysusers.in minecraftd.tmpfiles.in minecraftd-backup.service.in minecraftd-backup.timer.in
-OBJECTS = $(SOURCES:.in=)
+OBJECTS = $(addprefix $(BUILD_DIR)/, $(SOURCES:.in=))
 
 GAME = minecraft
 INAME = minecraftd
@@ -36,6 +41,12 @@ GAME_COMMAND_DUMP = /tmp/$${INAME}_$${SESSION_NAME}_command_dump.txt
 MAX_SERVER_START_TIME = 150
 MAX_SERVER_STOP_TIME = 100
 IDLE_WAKE_WHITELIST_CMD = jq -r '.[].name'
+
+WEB_WAKE_IN = $(shell find $(WEB_WAKE_DIR) -type f)
+WEB_WAKE_BUILD_SRCS = $(patsubst $(WEB_WAKE_DIR)/%, $(BUILD_DIR)/$(WEB_WAKE_DIR)/%, $(WEB_WAKE_IN))
+WEB_WAKE_BIN = $(BUILD_DIR)/web-wake-server
+
+webdir = $(datarootdir)/$(GAME)/web
 
 .MAIN = all
 
@@ -68,48 +79,54 @@ define replace_all
 		$(2)
 endef
 
-all: $(OBJECTS)
-	echo $(OBJECTS)
+all: $(OBJECTS) $(WEB_WAKE_BIN)
+	echo $@
 
-%.sh: %.sh.in
+$(BUILD_DIR) $(BUILD_DIR)/$(WEB_WAKE_DIR):
+	mkdir -p $@
+
+$(BUILD_DIR)/%: *.in | $(BUILD_DIR)
 	$(call replace_all,$<,$@)
 
-%.conf: %.conf.in
+$(BUILD_DIR)/$(WEB_WAKE_DIR)/%: $(WEB_WAKE_DIR)/% | $(BUILD_DIR)/$(WEB_WAKE_DIR)
+	@mkdir -p $(dir $@)
 	$(call replace_all,$<,$@)
 
-%.service: %.service.in
-	$(call replace_all,$<,$@)
-
-%.sysusers: %.sysusers.in
-	$(call replace_all,$<,$@)
-
-%.tmpfiles: %.tmpfiles.in
-	$(call replace_all,$<,$@)
-
-%.timer: %.timer.in
-	$(call replace_all,$<,$@)
+$(WEB_WAKE_BIN): $(WEB_WAKE_BUILD_SRCS) | $(BUILD_DIR)
+	$(CXX) $(CXXFLAGS) \
+	-I$(BUILD_DIR)/$(WEB_WAKE_DIR)/include -I$(BUILD_DIR)/$(WEB_WAKE_DIR)/src \
+	-DWEB_DIR=\"$(DESTDIR)$(webdir)/\" -DCONFIG_PATH=\"$(DESTDIR)$(confdir)/$(GAME)-web-wake.json\" \
+	$(BUILD_DIR)/$(WEB_WAKE_DIR)/src/*.cpp -lssl -lcrypto -o $@
 
 clean:
-	rm -f $(OBJECTS)
+	rm -rf $(BUILD_DIR)
 
 distclean: clean
 
 maintainer-clean: clean
 
 install:
-	$(INSTALL_PROGRAM) -D minecraftd.sh "$(DESTDIR)$(bindir)/$(INAME)"
-	$(INSTALL_DATA) -D minecraftd.conf           "$(DESTDIR)$(confdir)/$(GAME)"
-	$(INSTALL_DATA) -D minecraftd.service        "$(DESTDIR)$(libdir)/systemd/system/$(INAME).service"
-	$(INSTALL_DATA) -D minecraftd-backup.service "$(DESTDIR)$(libdir)/systemd/system/$(INAME)-backup.service"
-	$(INSTALL_DATA) -D minecraftd-backup.timer   "$(DESTDIR)$(libdir)/systemd/system/$(INAME)-backup.timer"
-	$(INSTALL_DATA) -D minecraftd.sysusers       "$(DESTDIR)$(libdir)/sysusers.d/$(INAME).conf"
-	$(INSTALL_DATA) -D minecraftd.tmpfiles       "$(DESTDIR)$(libdir)/tmpfiles.d/$(INAME).conf"
+	$(INSTALL_PROGRAM) -D $(BUILD_DIR)/minecraftd.sh "$(DESTDIR)$(bindir)/$(INAME)"
+	$(INSTALL_DATA) -D $(BUILD_DIR)/minecraftd.conf           "$(DESTDIR)$(confdir)/$(GAME)"
+	$(INSTALL_DATA) -D $(BUILD_DIR)/minecraftd.service        "$(DESTDIR)$(libdir)/systemd/system/$(INAME).service"
+	$(INSTALL_DATA) -D $(BUILD_DIR)/minecraftd-backup.service "$(DESTDIR)$(libdir)/systemd/system/$(INAME)-backup.service"
+	$(INSTALL_DATA) -D $(BUILD_DIR)/minecraftd-backup.timer   "$(DESTDIR)$(libdir)/systemd/system/$(INAME)-backup.timer"
+	$(INSTALL_DATA) -D $(BUILD_DIR)/minecraftd.sysusers       "$(DESTDIR)$(libdir)/sysusers.d/$(INAME).conf"
+	$(INSTALL_DATA) -D $(BUILD_DIR)/minecraftd.tmpfiles       "$(DESTDIR)$(libdir)/tmpfiles.d/$(INAME).conf"
+
+	$(INSTALL_PROGRAM) -D $(BUILD_DIR)/$(WEB_WAKE_BIN)	"$(DESTDIR)$(bindir)/$(INAME)-web-wake"
+	$(INSTALL_DATA) -D $(BUILD_DIR)/$(WEB_WAKE_DIR)/config.json	"$(DESTDIR)$(confdir)/$(GAME)-web-wake.json"
+	$(INSTALL) -d "$(DESTDIR)$(webdir)"
+	$(INSTALL_DATA) $(BUILD_DIR)/$(WEB_WAKE_DIR)/web/*	"$(DESTDIR)$(webdir)/"
 
 uninstall:
-	rm -f "$(bindir)/$(INAME)"
-	rm -f "$(confdir)/$(GAME)"
-	rm -f "$(libdir)/systemd/system/$(INAME).service"
-	rm -f "$(libdir)/systemd/system/$(INAME)-backup.service"
-	rm -f "$(libdir)/systemd/system/$(INAME)-backup.timer"
-	rm -f "$(libdir)/sysusers.d/$(INAME).conf"
-	rm -f "$(libdir)/tmpfiles.d/$(INAME).conf"
+	rm -f "$(DESTDIR)$(bindir)/$(INAME)"
+	rm -f "$(DESTDIR)$(confdir)/$(GAME)"
+	rm -f "$(DESTDIR)$(libdir)/systemd/system/$(INAME).service"
+	rm -f "$(DESTDIR)$(libdir)/systemd/system/$(INAME)-backup.service"
+	rm -f "$(DESTDIR)$(libdir)/systemd/system/$(INAME)-backup.timer"
+	rm -f "$(DESTDIR)$(libdir)/sysusers.d/$(INAME).conf"
+	rm -f "$(DESTDIR)$(libdir)/tmpfiles.d/$(INAME).conf"
+	rm -f "$(DESTDIR)$(bindir)/$(INAME)-web-wake"
+	rm -f "$(DESTDIR)$(confdir)/$(GAME)-web-wake.json"
+	rm -rf "$(DESTDIR)$(webdir)"
