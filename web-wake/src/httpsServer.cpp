@@ -8,6 +8,8 @@ httpsServer::httpsServer(std::string listenHost, int listenPort, std::string tok
     //TODO
 }
 
+httpsServer::~httpsServer(){ }
+
 int httpsServer::run(){
     if(!srv.is_valid()){
         std::cerr << "FATAL: Failed to create https server.\n";
