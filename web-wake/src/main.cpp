@@ -31,7 +31,12 @@ std::string genToken(){
     return ss.str();
 }
 
-int main(){
+int main(int argc, char* argv[]){
+    if(argc < 3){
+        std::string thisname = (argv[0] == nullptr || strcmp(argv[0], "") == 0) ? "<this executable>" : argv[0];
+        std::cerr << "Usage: " << thisname << " <cmds to @INAME@ idle Daemon fifo> <@GAME@ server status to " << thisname << " fifo>\n";
+        return 1;
+    }
     std::ifstream configFile(configPath);
     json config;
     if(!configFile){
@@ -61,7 +66,7 @@ int main(){
         }
     }
 
-    httpsServer server(config["listen host"], config["listen port"], config["token"]);
+    httpsServer server(config["listen host"], config["listen port"], config["token"], argv[1], argv[2]);
     server.run();
 
     return 0;

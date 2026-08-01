@@ -11,7 +11,7 @@ private:
     std::string token;
     idleDaemonIPC idIPC;
 public:
-    httpsServer(std::string listenHost, int listenPort, std::string token);
+    httpsServer(std::string listenHost, int listenPort, std::string token, const char* cmd_fifo_path, const char* status_fifo_path);
     ~httpsServer();
 
     void run();
