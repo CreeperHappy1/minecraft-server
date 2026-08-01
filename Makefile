@@ -114,7 +114,7 @@ install:
 	$(INSTALL_DATA) -D $(BUILD_DIR)/minecraftd.sysusers       "$(DESTDIR)$(libdir)/sysusers.d/$(INAME).conf"
 	$(INSTALL_DATA) -D $(BUILD_DIR)/minecraftd.tmpfiles       "$(DESTDIR)$(libdir)/tmpfiles.d/$(INAME).conf"
 
-	$(INSTALL_PROGRAM) -D $(BUILD_DIR)/$(WEB_WAKE_BIN)	"$(DESTDIR)$(bindir)/$(INAME)-web-wake"
+	$(INSTALL_PROGRAM) -D $(WEB_WAKE_BIN)	"$(DESTDIR)$(bindir)/$(INAME)-web-wake"
 	$(INSTALL_DATA) -D $(BUILD_DIR)/$(WEB_WAKE_DIR)/config.json	"$(DESTDIR)$(confdir)/$(GAME)-web-wake.json"
 	$(INSTALL) -d "$(DESTDIR)$(webdir)"
 	$(INSTALL_DATA) $(BUILD_DIR)/$(WEB_WAKE_DIR)/web/*	"$(DESTDIR)$(webdir)/"
