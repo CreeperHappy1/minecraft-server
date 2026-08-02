@@ -118,7 +118,7 @@ idle_server_daemon() {
 		exit 22
 	fi
 
-	if [[ "${IDLE_WAKE_MODE}" == "web-wake" ]]; then
+	if [[ "${IDLE_WAKE_MODE}" == "webwake" ]]; then
 		TMP_DIR=$(mktemp -d /tmp/@INAME@-ipc.XXXXXX)
 		trap rm -rf "$TMP_DIR" EXIT
 
@@ -274,7 +274,7 @@ server_start() {
 
 		# Check if IDLE_WAKE_MODE has a valid value, default to "any" otherwise
 		case "${IDLE_WAKE_MODE}" in
-		any|whitelist)
+		any|webwake)
 			;;
 		*)
 			>&2 echo "Warning: IDLE_WAKE_MODE is an invalid value: '${IDLE_WAKE_MODE}', defaulting to 'any'"

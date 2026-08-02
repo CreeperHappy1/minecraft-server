@@ -27,6 +27,6 @@ GAME_PORT="@GAME_PORT@"         # used to listen for incoming connections when t
 CHECK_PLAYER_TIME="@CHECK_PLAYER_TIME@"    # in seconds
 IDLE_IF_TIME="@IDLE_IF_TIME@"       # in seconds
 # "any" -> wake up from idle from any connection
-# "web-wake" -> wake up through a webfront hosted locally
+# "webwake" -> wake up through a webfront hosted locally
 IDLE_WAKE_MODE="@IDLE_WAKE_MODE@"
 IDLE_WAKE_WHITELIST="@IDLE_WAKE_WHITELIST@" # path to the server's whitelist file
