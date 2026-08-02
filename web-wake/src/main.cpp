@@ -8,7 +8,7 @@ using json = nlohmann::json;
 //in case config.json is missing it will be regenerated
 const json defaultConfig = {
     {"listen host", "0.0.0.0"},
-    {"listen port", 25566},
+    {"listen port", 25563},
     {"token", "uninitialized"}
 };
 
