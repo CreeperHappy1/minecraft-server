@@ -41,6 +41,7 @@ GAME_COMMAND_DUMP = /tmp/$${INAME}_$${SESSION_NAME}_command_dump.txt
 MAX_SERVER_START_TIME = 150
 MAX_SERVER_STOP_TIME = 100
 IDLE_WAKE_WHITELIST_CMD = jq -r '.[].name'
+WEBWAKE_SESSION_NAME = webwake_server_$${SESSION_NAME}
 
 WEB_WAKE_IN = $(shell find $(WEB_WAKE_DIR) -type f)
 WEB_WAKE_BUILD_SRCS = $(patsubst $(WEB_WAKE_DIR)/%, $(BUILD_DIR)/$(WEB_WAKE_DIR)/%, $(WEB_WAKE_IN))
@@ -76,6 +77,7 @@ define replace_all
 		-e 's#@MAX_SERVER_START_TIME@#$(MAX_SERVER_START_TIME)#g' \
 		-e 's#@MAX_SERVER_STOP_TIME@#$(MAX_SERVER_STOP_TIME)#g' \
 		-e 's#@IDLE_WAKE_WHITELIST_CMD@#$(IDLE_WAKE_WHITELIST_CMD)#g' \
+		-e 's#@WEBWAKE_SESSION_NAME@#$(WEBWAKE_SESSION_NAME)#g' \
 		$(2)
 endef
 
