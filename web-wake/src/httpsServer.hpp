@@ -5,6 +5,14 @@
 #include <httplib.h>
 #include "idleDaemonIPC.hpp"
 
+#ifdef WEB_DIR
+const std::string webdir = WEB_DIR;
+#else
+const std::string webdir = "";//fallback
+#endif
+const std::string certpath = webdir+"cert.pem";
+const std::string keypath = webdir+"key.pem";
+
 class httpsServer{
 private:
     httplib::SSLServer srv;
@@ -12,7 +20,8 @@ private:
     int listenPort;
     std::string token;
     idleDaemonIPC idIPC;
-    
+
+    bool authenticated(const httplib::Request& req);
 public:
     httpsServer(std::string listenHost, int listenPort, std::string token, const char* cmd_fifo_path, const char* status_fifo_path);
     ~httpsServer();

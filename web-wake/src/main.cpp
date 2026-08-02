@@ -89,8 +89,9 @@ int main(int argc, char* argv[]){
     if(argc < 3){
         std::string thisname = (argv[0] == nullptr || strcmp(argv[0], "") == 0) ? "<this executable>" : argv[0];
         std::cerr << "Usage: " << thisname << " <cmds to @INAME@ idle Daemon fifo> <@GAME@ server status to " << thisname << " fifo>\n";
-        return 1;
+        return 2;
     }
+    /// Get config:
     std::ifstream configFile(configPath);
     json config;
     if(!configFile){
@@ -99,8 +100,15 @@ int main(int argc, char* argv[]){
     }else{
         config = json::parse(configFile);
     }
-    
+    /// Get token:
     std::string token = getOrGenToken();
+    /// Check for SSL certificate
+    if(!std::filesystem::exists(certpath) || !std::filesystem::exists(keypath)){
+        std::cerr << "FATAL: SSL Certificates are missing on paths " << certpath << " and " << keypath
+            << "\nEither add your own or to generate self-signed ones run "
+            << "\'openssl req -x509 -newkey rsa:2048 -days 365 -nodes -keyout " << keypath << " -out " << certpath << " -subj \"/CN=localhost\"\'\n";
+        return 1;
+    }
 
     httpsServer server(config["listen host"], config["listen port"], token, argv[1], argv[2]);
     
