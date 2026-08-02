@@ -15,6 +15,7 @@ const std::string keypath = webdir+"key.pem";
 
 class httpsServer{
 private:
+    const std::list<std::string> noAuthPatterns {"/", "/auth.js", "/setup", "/setup.js"};
     httplib::SSLServer srv;
     std::string listenHost;
     int listenPort;

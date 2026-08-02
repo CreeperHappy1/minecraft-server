@@ -9,16 +9,25 @@ httpsServer::httpsServer(std::string listenHost, int listenPort, std::string tok
     srv(certpath.c_str(), keypath.c_str()), idIPC(cmd_fifo_path, status_fifo_path, &srv) {
     
     srv.set_pre_routing_handler([this](const httplib::Request &req, httplib::Response &res){
-        if(req.matched_route.rfind("/", 0) != 0 && req.matched_route.rfind("/setup", 0) != 0){//only / and /setup are allowed without auth
-            if(!authenticated(req)){
-                res.status = 403;
-                res.set_content("forbidden", "text/plain");
-                return httplib::Server::HandlerResponse::Handled;
-            }
+        for(std::string s : noAuthPatterns)
+            if(req.matched_route.rfind(s, 0) == 0)
+                return httplib::Server::HandlerResponse::Unhandled;
+        if(authenticated(req)){
+            return httplib::Server::HandlerResponse::Unhandled;
+        }else{
+            res.status = 403;
+            res.set_content("forbidden", "text/plain");
+            return httplib::Server::HandlerResponse::Handled;
         }
-        return httplib::Server::HandlerResponse::Unhandled;
     });
-    srv.Get("/", [](const auto &, auto &res){res.set_content("ok", "test");});//TEST//TODO
+
+    srv.Get("/", [](const httplib::Request &req, httplib::Response &res){
+        res.set_content("<script type=\"module\">\n"
+                "\timport { bootstrap } from \"/auth.js\";\n"
+                "\tbootstrap();"
+            "\n</script>",
+            "text/html");
+    });
     srv.Get("/panel.html", [](const httplib::Request &req, httplib::Response &res){
         res.set_file_content(webdir + "panel.html", "text/html");
     });
@@ -30,6 +39,9 @@ httpsServer::httpsServer(std::string listenHost, int listenPort, std::string tok
     });
     srv.Get("/setup", [](const httplib::Request &req, httplib::Response &res){
         res.set_file_content(webdir + "setup.js", "application/javascript");
+    });
+    srv.Get("/auth.js", [](const httplib::Request &req, httplib::Response &res){
+        res.set_file_content(webdir + "auth.js", "application/javascript");
     });
     //TODO
 }
