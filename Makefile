@@ -97,7 +97,7 @@ $(BUILD_DIR)/$(WEB_WAKE_DIR)/%: $(WEB_WAKE_DIR)/% | $(BUILD_DIR)/$(WEB_WAKE_DIR)
 $(WEB_WAKE_BIN): $(WEB_WAKE_BUILD_SRCS) | $(BUILD_DIR)
 	$(CXX) $(CXXFLAGS) \
 	-I$(BUILD_DIR)/$(WEB_WAKE_DIR)/include -I$(BUILD_DIR)/$(WEB_WAKE_DIR)/src \
-	-DWEB_DIR=\"$(DESTDIR)$(webdir)/\" -DCONFIG_PATH=\"$(DESTDIR)$(confdir)/$(GAME)-web-wake.json\" -DTOKEN_PATH=\"$(SERVER_ROOT)/.web-wake-token\" \
+	-DWEB_DIR=\"$(webdir)/\" -DCONFIG_PATH=\"$(confdir)/$(GAME)-web-wake.json\" -DTOKEN_PATH=\"$(SERVER_ROOT)/.web-wake-token\" \
 	$(BUILD_DIR)/$(WEB_WAKE_DIR)/src/*.cpp -lssl -lcrypto -o $@
 
 clean:
