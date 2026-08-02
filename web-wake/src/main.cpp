@@ -73,5 +73,6 @@ int main(int argc, char* argv[]){
 
     httpsServer server(config["listen host"], config["listen port"], config["token"], argv[1], argv[2]);
     
+    std::cout << "Starting https server...\n";
     return server.run();
 }
