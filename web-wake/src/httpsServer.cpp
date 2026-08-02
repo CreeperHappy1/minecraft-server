@@ -2,7 +2,7 @@
 #include "idleDaemonIPC.hpp"
 
 #ifdef CONFIG_PATH
-const std::string webdir = WEBDIR;
+const std::string webdir = WEB_DIR;
 #else
 const std::string webdir = "";//fallback
 #endif
