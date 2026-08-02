@@ -39,12 +39,13 @@ void idleDaemonIPC::refresh(){
     getline(read_fd, in);
     int space = in.find(' ');
     if(space == std::string::npos){
-        std::cerr << "Each line must have at least 2 words separated by a space.\n";
+        std::cerr << "Each line must have at least 2 words separated by a space. Received:\t" << in << std::endl;
         return;
     }
     std::string word1 = in.substr(0, space);
     std::string word2 = in.substr(space+1,in.length());
     if(word1 == "STATUS"){
+        std::cout << "DEBUG: status received\n";
         if(word2 == "OFFLINE")
             serverStatus = OFFLINE;
         else if(word2 == "ONLINE")
@@ -54,7 +55,7 @@ void idleDaemonIPC::refresh(){
         else if(word2 == "STOPPING")
             serverStatus = STOPPING;
         else{
-            std::cerr << "STATUS value is not OFFLINE|ONLINE|STARTING|STOPPING\n";
+            std::cerr << "STATUS value is not OFFLINE|ONLINE|STARTING|STOPPING. Received:\t" << word2 << std::endl;
             serverStatus = UNKNOWN;
         }
     }else if(word1 == "PLAYERS"){
