@@ -46,7 +46,6 @@ httpsServer::httpsServer(std::string listenHost, int listenPort, std::string tok
     srv.Get("/script.js", [](const httplib::Request &req, httplib::Response &res){
         res.set_file_content(webdir + "script.js", "application/javascript");
     });
-    //TODO
 }
 
 httpsServer::~httpsServer(){ }
