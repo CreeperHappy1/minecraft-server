@@ -85,7 +85,7 @@ all: $(OBJECTS) $(WEB_WAKE_BIN)
 $(BUILD_DIR) $(BUILD_DIR)/$(WEB_WAKE_DIR):
 	mkdir -p $@
 
-$(BUILD_DIR)/%: *.in | $(BUILD_DIR)
+$(BUILD_DIR)/%: %.in | $(BUILD_DIR)
 	$(call replace_all,$<,$@)
 
 $(BUILD_DIR)/$(WEB_WAKE_DIR)/%: $(WEB_WAKE_DIR)/% | $(BUILD_DIR)/$(WEB_WAKE_DIR)
