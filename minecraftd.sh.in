@@ -322,6 +322,14 @@ server_stop() {
 		else
 			echo "The corresponding tmux session for ${IDLE_SESSION_NAME} was already dead."
 		fi
+
+		if socket_has_session "${WEBWAKE_SESSION_NAME}"; then
+			echo -en "Stopping web-wake server daemon..."
+			"${SUDO_CMD[@]}" tmux -L "${SESSION_NAME}" kill-session -t "${WEBWAKE_SESSION_NAME}"
+			echo -e "\e[39;1m done\e[0m"
+		else
+			echo "The corresponding tmux session for ${WEBWAKE_SESSION_NAME} was already dead."
+		fi
 	fi
 
 	# Gracefully exit the game server
