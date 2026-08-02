@@ -10,6 +10,7 @@ idleDaemonIPC::idleDaemonIPC(const char* cmd_fifo_path, const char* status_fifo_
         return;
     }
     serverStatus = UNKNOWN;
+    maxPlayercount = -1;
     playercount = -1;
     players = new std::list<std::string>();
 
@@ -92,6 +93,23 @@ std::string idleDaemonIPC::getServerStatus() const {
 
 int idleDaemonIPC::getPlayercount() const {
     return playercount;
+}
+
+int idleDaemonIPC::getMaxPlayercount() const {
+    return maxPlayercount;
+}
+
+std::list<std::string> idleDaemonIPC::getPlayers() const {
+    return std::list<std::string>(*players);
+}
+
+json idleDaemonIPC::getFullStatus() const {
+    json j;
+    j["status"] = getServerStatus();
+    j["playercount"] = getPlayercount();
+    j["maxPlayercount"] = getMaxPlayercount();
+    j["players"] = getPlayers();
+    return j;
 }
 
 void idleDaemonIPC::wake(){

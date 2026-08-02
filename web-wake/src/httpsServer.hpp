@@ -21,7 +21,7 @@ private:
     std::string token;
     idleDaemonIPC idIPC;
 
-    bool authenticated(const httplib::Request& req);
+    bool static authenticated(const httplib::Request& req);
 public:
     httpsServer(std::string listenHost, int listenPort, std::string token, const char* cmd_fifo_path, const char* status_fifo_path);
     ~httpsServer();

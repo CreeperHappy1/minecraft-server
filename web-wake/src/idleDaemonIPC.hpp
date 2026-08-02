@@ -6,6 +6,8 @@
 #include <string>
 #include <thread>
 #include <httplib.h>
+#include <json.hpp>
+using json = nlohmann::json;
 
 enum status {OFFLINE, ONLINE, STARTING, STOPPING, UNKNOWN};
 
@@ -28,6 +30,10 @@ public:
 
     std::string getServerStatus() const;
     int getPlayercount() const;
+    int getMaxPlayercount() const;
+    std::list<std::string> getPlayers() const;
+
+    json getFullStatus() const;
 
     void wake();
 };
