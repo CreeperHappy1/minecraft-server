@@ -209,6 +209,7 @@ idle_server_daemon() {
 		# Retry in ${CHECK_PLAYER_TIME} seconds
 		if [[ "${IDLE_WAKE_MODE}" == "webwake" ]]; then
 			is_player_online # Send initial values
+		fi
 		sleep "${CHECK_PLAYER_TIME}"
 
 		if socket_has_session "${SESSION_NAME}"; then
