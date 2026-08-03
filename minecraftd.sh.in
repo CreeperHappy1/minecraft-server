@@ -182,6 +182,9 @@ idle_server_daemon() {
 
 		if socket_has_session "${SESSION_NAME}"; then
 			# Game server is up and running
+			if [[ "${IDLE_WAKE_MODE}" == "webwake" ]] && read -r -t 0 cmd <&3 && [[ cmd == "QUERY STATUS" ]]; then
+				update_status "ONLINE"
+			fi
 			# Check for active player
 			if [[ -n "$(tmux -L "${SESSION_NAME}" list-clients -t "${SESSION_NAME}":0.0 2> /dev/null)" ]]; then
 				# An administrator is connected to the console, pause player checking
@@ -208,10 +211,15 @@ idle_server_daemon() {
 						done
 						# Then we wait until a WAKE command is read before restarting the server
 						while read -r cmd <&3; do
-							if [[ cmd == "WAKE" ]]; then
+							case "$cmd" in
+							"WAKE")
 								echo -n "WAKE command received through fifo. "
 								break;
-							fi
+								;;
+							"QUERY STATUS")
+								update_status "OFFLINE"
+								;;
+							esac
 						done
 					else # Game server is down, listen on port ${GAME_PORT} for incoming connections
 						echo -n "Netcat: "

@@ -18,6 +18,7 @@ private:
     httplib::Server* server;
 
     std::atomic<status> serverStatus;
+    std::chrono::steady_clock::time_point serverStatusLastUpdate;
     std::atomic<int> playercount;
     std::atomic<int> maxPlayercount;
     std::atomic<std::list<std::string>*> players;
@@ -28,12 +29,12 @@ public:
     idleDaemonIPC(const char* cmd_fifo_path, const char* status_fifo_path, httplib::Server* server);
     ~idleDaemonIPC();
 
-    std::string getServerStatus() const;
+    std::string getServerStatus();
     int getPlayercount() const;
     int getMaxPlayercount() const;
     std::list<std::string> getPlayers() const;
 
-    json getFullStatus() const;
+    json getFullStatus();
 
     void wake();
 };

@@ -1,4 +1,5 @@
 #include "idleDaemonIPC.hpp"
+#include <chrono>
 
 idleDaemonIPC::idleDaemonIPC(const char* cmd_fifo_path, const char* status_fifo_path, httplib::Server* server){
     write_fd.open(cmd_fifo_path);
@@ -10,6 +11,7 @@ idleDaemonIPC::idleDaemonIPC(const char* cmd_fifo_path, const char* status_fifo_
         return;
     }
     serverStatus = UNKNOWN;
+    serverStatusLastUpdate = std::chrono::steady_clock::now();
     maxPlayercount = -1;
     playercount = -1;
     players = new std::list<std::string>();
@@ -45,7 +47,7 @@ void idleDaemonIPC::refresh(){
     std::string word1 = in.substr(0, space);
     std::string word2 = in.substr(space+1,in.length());
     if(word1 == "STATUS"){
-        std::cout << "DEBUG: status received\n";
+        //std::cout << "DEBUG: status received\n";
         if(word2 == "OFFLINE")
             serverStatus = OFFLINE;
         else if(word2 == "ONLINE")
@@ -58,6 +60,7 @@ void idleDaemonIPC::refresh(){
             std::cerr << "STATUS value is not OFFLINE|ONLINE|STARTING|STOPPING. Received:\t" << word2 << std::endl;
             serverStatus = UNKNOWN;
         }
+        serverStatusLastUpdate = std::chrono::steady_clock::now();
     }else if(word1 == "PLAYERS"){
         std::list<std::string>* playersInfo = new std::list<std::string>();
         for(int it = 0; space != std::string::npos; it = space+1){
@@ -77,7 +80,12 @@ void idleDaemonIPC::refresh(){
     }
 }
 
-std::string idleDaemonIPC::getServerStatus() const {
+std::string idleDaemonIPC::getServerStatus() {
+    if((serverStatus == STARTING || serverStatus == STOPPING || serverStatus == UNKNOWN) 
+        && std::chrono::steady_clock::now() - serverStatusLastUpdate > std::chrono::seconds(20)){
+        write_fd << "QUERY STATUS\n";
+        serverStatusLastUpdate = std::chrono::steady_clock::now();//don't ask again until 20 seconds have passed
+    }
     switch(serverStatus){
         case OFFLINE:
             return "OFFLINE";
@@ -104,7 +112,7 @@ std::list<std::string> idleDaemonIPC::getPlayers() const {
     return std::list<std::string>(*players);
 }
 
-json idleDaemonIPC::getFullStatus() const {
+json idleDaemonIPC::getFullStatus(){
     json j;
     j["status"] = getServerStatus();
     j["playercount"] = getPlayercount();
