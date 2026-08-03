@@ -84,7 +84,9 @@ std::string idleDaemonIPC::getServerStatus() {
     if((serverStatus == STARTING || serverStatus == STOPPING || serverStatus == UNKNOWN) 
         && std::chrono::steady_clock::now() - serverStatusLastUpdate > std::chrono::seconds(20)){
         write_fd << "QUERY STATUS\n";
+        write_fd.flush();
         serverStatusLastUpdate = std::chrono::steady_clock::now();//don't ask again until 20 seconds have passed
+        //std::cout << "DEBUG: asked for update on STATUS\n";
     }
     switch(serverStatus){
         case OFFLINE:
@@ -123,4 +125,5 @@ json idleDaemonIPC::getFullStatus(){
 
 void idleDaemonIPC::wake(){
     write_fd << "WAKE\n";
+    write_fd.flush();
 }

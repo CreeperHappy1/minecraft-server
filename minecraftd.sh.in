@@ -101,8 +101,10 @@ is_player_online() {
 	response="$(echo "${response}" | sed -r -e 's/\x1B\[([0-9]{1,2}(;[0-9]{1,2})*)?[JKmsuG]//g')"
 	# Update web-wake data (only updated by idle daemon)
 	if [[ "${IDLE_WAKE_MODE}" == "webwake" ]] && { true >&4; } 2>/dev/null ; then
-		>&4 echo -n "PLAYERS "
-		>&4 echo "$(echo "${response}" | sed -n -E 's/\r//g; /There are/ { s/.*There are ([0-9]+) of a max of ([0-9]+) players online:[[:space:]]*/\1 \2 /; s/,//g; s/[[:space:]]*$//; p }')"
+		playersStatus=$(echo "${response}" | sed -n -E 's/\r//g; /There are/ { s/.*There are ([0-9]+) of a max of ([0-9]+) players online:[[:space:]]*/\1 \2 /; s/,//g; s/[[:space:]]*$//; p }')
+		if [[ "$playersStatus" =~ ^[0-9]+[[:space:]]+[0-9]+ ]]; then # Check if we managed to get proper output before sending it
+			>&4 echo "PLAYERS $playersStatus"
+		fi
 	fi
 	# The list command prints a line containing the usernames after the last occurrence of ": "
 	# and since playernames may not contain this string the clean player-list can easily be retrieved.
@@ -124,6 +126,7 @@ is_player_online() {
 update_status() {
 	if [[ -p "$STATUS_FIFO" ]]; then
 		echo "STATUS $1" >"$STATUS_FIFO"
+		#echo "Sending status update: $1" 
 	fi
 }
 
@@ -131,10 +134,11 @@ update_status() {
 wait_until_wake() {
 	if [[ "${IDLE_WAKE_MODE}" == "webwake" ]]; then
 		# First we drain the cmd fifo in case some wake was left over from before
-		while read -r -t 0 discard <&3; do 
+		while read -r -t 0.1 discard <&3; do 
 			:
 		done
 		# Then we wait until a WAKE command is read before restarting the server
+		local cmd
 		while read -r cmd <&3; do
 			case "$cmd" in
 			"WAKE")
@@ -208,14 +212,17 @@ idle_server_daemon() {
 		printf "no_player: %10ss  check_player_time: %10ss  idle_if_time: %10ss\n" "${no_player}" "${CHECK_PLAYER_TIME}" "${IDLE_IF_TIME}"
 		# Retry in ${CHECK_PLAYER_TIME} seconds
 		if [[ "${IDLE_WAKE_MODE}" == "webwake" ]]; then
-			is_player_online # Send initial values
+			is_player_online || true # Send initial values
 		fi
 		sleep "${CHECK_PLAYER_TIME}"
 
 		if socket_has_session "${SESSION_NAME}"; then
 			# Game server is up and running
-			if [[ "${IDLE_WAKE_MODE}" == "webwake" ]] && read -r -t 0 cmd <&3 && [[ cmd == "QUERY STATUS" ]]; then
-				update_status "ONLINE"
+			if [[ "${IDLE_WAKE_MODE}" == "webwake" ]]; then
+				local cmd
+				if read -r -t 0.1 cmd <&3 && [[ "${cmd:-}" == "QUERY STATUS" ]] ; then
+					update_status "ONLINE"
+				fi
 			fi
 			# Check for active player
 			if [[ -n "$(tmux -L "${SESSION_NAME}" list-clients -t "${SESSION_NAME}":0.0 2> /dev/null)" ]]; then
