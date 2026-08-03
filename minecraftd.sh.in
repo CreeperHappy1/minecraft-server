@@ -127,6 +127,37 @@ update_status() {
 	fi
 }
 
+# Wait until the appropiate condition for the server to wake up from idle
+wait_until_wake() {
+	if [[ "${IDLE_WAKE_MODE}" == "webwake" ]]; then
+		# First we drain the cmd fifo in case some wake was left over from before
+		while read -r -t 0 discard <&3; do 
+			:
+		done
+		# Then we wait until a WAKE command is read before restarting the server
+		while read -r cmd <&3; do
+			case "$cmd" in
+			"WAKE")
+				echo -n "WAKE command received through fifo. "
+				break;
+				;;
+			"QUERY STATUS")
+				update_status "OFFLINE"
+				;;
+			esac
+		done
+	else # Game server is down, listen on port ${GAME_PORT} for incoming connections
+		echo -n "Netcat: "
+		while true; do
+			"${NETCAT_CMD[@]}" -v -l -p "${GAME_PORT}" 2>&1 | (grep -m1 -i "connect" && pkill -P $$ "${NETCAT_CMD[@]}") || true
+			echo -n "Netcat caught a connection. "
+			break
+		done
+	fi
+	echo "The server is coming up again..."
+	IDLE_SERVER="false" ${INAME} start
+}
+
 # Check whether the server is visited by a player otherwise shut it down
 idle_server_daemon() {
 	# This function is run within a tmux session of the GAME_USER therefore SUDO_CMD can be omitted
@@ -203,34 +234,7 @@ idle_server_daemon() {
 					done
 					# Reset timer and give the player 300 seconds to connect after pinging
 					no_player=$(( IDLE_IF_TIME - 300 ))
-					
-					if [[ "${IDLE_WAKE_MODE}" == "webwake" ]]; then
-						# First we drain the cmd fifo in case some wake was left over from before
-						while read -r -t 0 discard <&3; do 
-							:
-						done
-						# Then we wait until a WAKE command is read before restarting the server
-						while read -r cmd <&3; do
-							case "$cmd" in
-							"WAKE")
-								echo -n "WAKE command received through fifo. "
-								break;
-								;;
-							"QUERY STATUS")
-								update_status "OFFLINE"
-								;;
-							esac
-						done
-					else # Game server is down, listen on port ${GAME_PORT} for incoming connections
-						echo -n "Netcat: "
-						while true; do
-							"${NETCAT_CMD[@]}" -v -l -p "${GAME_PORT}" 2>&1 | (grep -m1 -i "connect" && pkill -P $$ "${NETCAT_CMD[@]}") || true
-							echo -n "Netcat caught a connection. "
-							break
-						done
-					fi
-					echo "The server is coming up again..."
-					IDLE_SERVER="false" ${INAME} start
+					wait_until_wake
 				fi
 			else
 				# Reset timer since there is an active player on the server
@@ -239,11 +243,7 @@ idle_server_daemon() {
 		else
 			# Reset timer and give the player 300 seconds to connect after pinging
 			no_player=$(( IDLE_IF_TIME - 300 ))
-			# Game server is down, listen on port ${GAME_PORT} for incoming connections
-			echo -n "Netcat: "
-			"${NETCAT_CMD[@]}" -v -l -p "${GAME_PORT}" 2>&1 | (grep -m1 -i "connect" && pkill -P $$ "${NETCAT_CMD[@]}") || true
-			echo "Netcat caught a connection. The server is coming up again..."
-			IDLE_SERVER="false" ${INAME} start
+			wait_until_wake
 		fi
 	done
 }
