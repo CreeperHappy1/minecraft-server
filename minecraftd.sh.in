@@ -103,6 +103,7 @@ is_player_online() {
 	if [[ "${IDLE_WAKE_MODE}" == "webwake" ]] && { true >&4; } 2>/dev/null ; then
 		playersStatus=$(echo "${response}" | sed -n -E 's/\r//g; /There are/ { s/.*There are ([0-9]+) of a max of ([0-9]+) players online:[[:space:]]*/\1 \2 /; s/,//g; s/[[:space:]]*$//; p }')
 		if [[ "$playersStatus" =~ ^[0-9]+[[:space:]]+[0-9]+ ]]; then # Check if we managed to get proper output before sending it
+			#echo "Sending player update: $playersStatus"
 			>&4 echo "PLAYERS $playersStatus"
 		fi
 	fi

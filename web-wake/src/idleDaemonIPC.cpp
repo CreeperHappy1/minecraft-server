@@ -39,6 +39,7 @@ idleDaemonIPC::~idleDaemonIPC(){
 void idleDaemonIPC::refresh(){
     std::string in;
     getline(read_fd, in);
+    //std::cout << "DEBUG: Received " << in << std::endl;
     int space = in.find(' ');
     if(space == std::string::npos){
         std::cerr << "Each line must have at least 2 words separated by a space. Received:\t" << in << std::endl;
@@ -64,8 +65,8 @@ void idleDaemonIPC::refresh(){
     }else if(word1 == "PLAYERS"){
         std::list<std::string>* playersInfo = new std::list<std::string>();
         for(int it = 0; space != std::string::npos; it = space+1){
-            space = word2.substr(it, word2.length()).find(' ');
-            playersInfo->push_back(word2.substr(it, (space == std::string::npos) ? word2.length() : space));
+            space = word2.find(' ', it);
+            playersInfo->push_back(word2.substr(it, space));
         }
         if(playersInfo->size() < 2){
             std::cerr << "PLAYERS must have at least 2 following words\n";
@@ -75,8 +76,9 @@ void idleDaemonIPC::refresh(){
         playersInfo->pop_front();
         maxPlayercount = std::stoi(playersInfo->front());
         playersInfo->pop_front();
-        delete players;
+        std::list<std::string>* oldp = players;
         players = playersInfo;
+        delete oldp;
     }
 }
 
