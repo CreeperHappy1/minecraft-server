@@ -1,5 +1,6 @@
 #include "idleDaemonIPC.hpp"
 #include <chrono>
+#include <memory>
 
 idleDaemonIPC::idleDaemonIPC(const char* cmd_fifo_path, const char* status_fifo_path, httplib::Server* server){
     write_fd.open(cmd_fifo_path);
@@ -14,7 +15,7 @@ idleDaemonIPC::idleDaemonIPC(const char* cmd_fifo_path, const char* status_fifo_
     serverStatusLastUpdate = std::chrono::steady_clock::now();
     maxPlayercount = -1;
     playercount = -1;
-    players = new std::list<std::string>();
+    std::atomic_store(&players, std::make_shared<std::list<std::string>>()); 
 
     if(read_fd.is_open()){
         reader = std::thread([this](){ 
@@ -33,7 +34,6 @@ idleDaemonIPC::~idleDaemonIPC(){
     write_fd.close();
     if(read_fd.is_open())
         read_fd.close();
-    delete players;
 }
 
 void idleDaemonIPC::refresh(){
@@ -63,7 +63,7 @@ void idleDaemonIPC::refresh(){
         }
         serverStatusLastUpdate = std::chrono::steady_clock::now();
     }else if(word1 == "PLAYERS"){
-        std::list<std::string>* playersInfo = new std::list<std::string>();
+        std::shared_ptr<std::list<std::string>> playersInfo = std::make_shared<std::list<std::string>>();
         for(int it = 0; space != std::string::npos; it = space+1){
             space = word2.find(' ', it);
             playersInfo->push_back(word2.substr(it, space));
@@ -76,9 +76,7 @@ void idleDaemonIPC::refresh(){
         playersInfo->pop_front();
         maxPlayercount = std::stoi(playersInfo->front());
         playersInfo->pop_front();
-        std::list<std::string>* oldp = players;
-        players = playersInfo;
-        delete oldp;
+        std::atomic_store(&players, playersInfo);
     }
 }
 
@@ -113,7 +111,8 @@ int idleDaemonIPC::getMaxPlayercount() const {
 }
 
 std::list<std::string> idleDaemonIPC::getPlayers() const {
-    return std::list<std::string>(*players);
+    std::shared_ptr<std::list<std::string>> ret = std::atomic_load(&players);
+    return *ret;
 }
 
 json idleDaemonIPC::getFullStatus(){

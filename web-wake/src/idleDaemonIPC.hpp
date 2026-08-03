@@ -21,7 +21,7 @@ private:
     std::chrono::steady_clock::time_point serverStatusLastUpdate;
     std::atomic<int> playercount;
     std::atomic<int> maxPlayercount;
-    std::atomic<std::list<std::string>*> players;
+    std::shared_ptr<std::list<std::string>> players;
 
     void refresh();//blocking refresh from read_fd
     std::thread reader;
