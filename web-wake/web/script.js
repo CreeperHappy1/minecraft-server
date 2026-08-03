@@ -16,7 +16,7 @@ async function refreshStatus(){
         item.textContent = player;
         playerList.appendChild(item);
     }
-    if(status.status == "STOPPED")
+    if(status.status == "OFFLINE" || status.status == "UNKNOWN")
         wakeButton.disabled = false;
     else
         wakeButton.disabled = true;
