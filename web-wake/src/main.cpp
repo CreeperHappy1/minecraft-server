@@ -40,7 +40,7 @@ std::string genToken(){
             filled += n;
     }
     std::stringstream ss;
-    ss << std::hex;
+    ss << std::hex << std::setfill('0');
     for(int i = 0; i < sizeof(randomBytes); i++)
         ss << std::setw(2) << (int)randomBytes[i];
     return ss.str();

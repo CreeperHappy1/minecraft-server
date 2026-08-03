@@ -15,14 +15,16 @@ const std::string keypath = webdir+"key.pem";
 
 class httpsServer{
 private:
+    const std::string scriptPlaceholder = "<!-- SUBSTITUE SCRIPT HERE -->";
     const std::list<std::string> noAuthPatterns {"/", "/auth.js", "/setup", "/setup.js"};
+    std::string parsedHtml;
     httplib::SSLServer srv;
     std::string listenHost;
     int listenPort;
     std::string token;
     idleDaemonIPC idIPC;
 
-    bool static authenticated(const httplib::Request& req);
+    bool authenticated(const httplib::Request& req);
 public:
     httpsServer(std::string listenHost, int listenPort, std::string token, const char* cmd_fifo_path, const char* status_fifo_path);
     ~httpsServer();
