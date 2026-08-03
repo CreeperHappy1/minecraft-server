@@ -14,7 +14,7 @@ using json = nlohmann::json;
 //in case config.json is missing these will be used
 const json defaultConfig = {
     {"listen host", "0.0.0.0"},
-    {"listen port", 25563}
+    {"listen port", 25564}
 };
 
 #ifdef CONFIG_PATH
